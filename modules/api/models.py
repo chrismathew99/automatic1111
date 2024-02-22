@@ -289,6 +289,10 @@ class MemoryResponse(BaseModel):
 
 
 class ScriptsList(BaseModel):
+class EmbeddingsResponse(BaseModel):
+    loaded: dict[str, EmbeddingItem] = Field(title="Loaded", description="Embeddings loaded for the current model")
+    skipped: dict[str, EmbeddingItem] = Field(title="Skipped", description="Embeddings skipped for the current model (likely due to architecture incompatibility)")
+    async_model_status: str = Field(default="idle", title="Async Model Status", description="Current status of the asynchronous model mover. Possible values are 'idle', 'moving', or 'synchronizing'.")
     txt2img: list = Field(default=None, title="Txt2img", description="Titles of scripts (txt2img)")
     img2img: list = Field(default=None, title="Img2img", description="Titles of scripts (img2img)")
 
@@ -314,5 +318,9 @@ class ExtensionItem(BaseModel):
     branch: str = Field(title="Branch", description="Extension Repository Branch")
     commit_hash: str = Field(title="Commit Hash", description="Extension Repository Commit Hash")
     version: str = Field(title="Version", description="Extension Version")
+class MemoryResponse(BaseModel):
+    ram: dict = Field(title="RAM", description="System memory stats")
+    cuda: dict = Field(title="CUDA", description="nVidia CUDA memory stats")
+    async_buffer_size: int = Field(default=2, title="Async Buffer Size", description="The size of the lookahead buffer for the asynchronous model mover. This determines how many models can be prepared in advance.", ge=1)
     commit_date: str = Field(title="Commit Date", description="Extension Repository Commit Date")
     enabled: bool = Field(title="Enabled", description="Flag specifying whether this extension is enabled")

@@ -1,6 +1,7 @@
 import torch
 import math
 import tqdm
+from modules.models.diffusion.uni_pc.async_model_mover import AsyncModelMover
 
 
 class NoiseScheduleVP:
@@ -127,6 +128,7 @@ class NoiseScheduleVP:
         Compute log(alpha_t) of a given continuous-time label t in [0, T].
         """
         if self.schedule == 'discrete':
+        self.async_model_mover = AsyncModelMover(buffer_size=3)  # Adjust buffer_size as needed
             return interpolate_fn(t.reshape((-1, 1)), self.t_array.to(t.device), self.log_alpha_array.to(t.device)).reshape((-1))
         elif self.schedule == 'linear':
             return -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
@@ -136,6 +138,8 @@ class NoiseScheduleVP:
             return log_alpha_t
 
     def marginal_alpha(self, t):
+        # Before any operation that requires the model to be on a specific device, ensure synchronization
+        self.async_model_mover.synchronize()
         """
         Compute alpha_t of a given continuous-time label t in [0, T].
         """
@@ -156,6 +160,10 @@ class NoiseScheduleVP:
         return log_mean_coeff - log_std
 
     def inverse_lambda(self, lamb):
+        # Move model asynchronously before performing operations
+        self.async_model_mover.move_model_async(model)
+        # Ensure the model is synchronized at necessary points to maintain state integrity
+        self.async_model_mover.synchronize()
         """
         Compute the continuous-time label t in [0, T] of a given half-logSNR lambda_t.
         """
